@@ -1,0 +1,13 @@
+services:
+  cowrie:
+    image: cowrie/cowrie:latest
+    container_name: honeypot
+    networks:
+      - lab_net
+    volumes:
+      - ./logs:/cowrie/cowrie-git/var/log/cowrie
+
+networks:
+  lab_net:
+    driver: bridge
+    internal: true
