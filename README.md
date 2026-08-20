@@ -1,4 +1,4 @@
-# 🍯 Honeypot Lab — Isolated Attack Simulation & Dashboard
+#  Honeypot Lab — Isolated Attack Simulation & Dashboard
 
 Um honeypot SSH isolado, um "atacante" automatizado que o testa, e um dashboard 
 que visualiza os dados de ataque recolhidos — tudo a correr localmente em Docker, 
