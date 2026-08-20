@@ -17,32 +17,6 @@ Isto permite demonstrar competências tanto do lado defensivo (deteção, loggin
 visualização) como do lado ofensivo (como um atacante automatiza reconhecimento 
 e exploração), sem os riscos de expor infraestrutura real.
 
-## Arquitetura
-
-┌─────────────────────────────────────────────┐
-│ Docker Network (internal: true) │
-│ Sem rota para internet/rede local │
-│ │
-│ ┌──────────────┐ ┌───────────────┐ │
-│ │ Attacker │ SSH │ Cowrie │ │
-│ │ (Python / │────────▶│ Honeypot │ │
-│ │ paramiko) │ │ (porta 2222) │ │
-│ └──────────────┘ └───────┬───────┘ │
-│ │ │
-└────────────────────────────────────┼───────────┘
-│ logs (volume)
-▼
-┌───────────────────┐
-│ logs/cowrie.json │
-└─────────┬──────────┘
-│ lido por
-▼
-┌───────────────────┐
-│ Node/Express │
-│ Dashboard │
-│ (localhost:3000) │
-└───────────────────┘
-
 
 ## Stack técnica
 
