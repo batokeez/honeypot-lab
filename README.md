@@ -1,124 +1,94 @@
-# 🍯 Honeypot Lab — Isolated Attack Simulation & Dashboard
+# Honeypot Lab — Isolated Attack Simulation & Dashboard
 
-Um honeypot SSH isolado, um "atacante" automatizado que o testa, e um dashboard 
-que visualiza os dados de ataque recolhidos — tudo a correr localmente em Docker, 
-sem custos e sem exposição à internet real.
+An isolated SSH honeypot, an automated "attacker" that tests it, and a dashboard 
+that visualizes the collected attack data, all running locally in Docker, 
+with no costs and no exposure to the real internet.
 
-## Porquê este projeto
+## Why this project
 
-Honeypots expostos à internet são comuns em portfólios, mas trazem responsabilidades 
-legais e éticas (recolha de dados de IPs reais, risco se o isolamento falhar). 
-Este projeto testa o mesmo conceito de forma controlada: em vez de esperar por 
-atacantes reais, escrevi o meu próprio script de ataque que simula técnicas comuns 
-(brute-force de credenciais, comandos pós-exploração típicos de malware), tudo numa 
-rede Docker completamente isolada da internet e da rede local.
+Internet-exposed honeypots are common in portfolios, but they carry legal and 
+ethical responsibilities (collecting real IP data, risk if isolation fails). 
+This project tests the same concept in a controlled way: instead of waiting for 
+real attackers, I wrote my own attack script that simulates common techniques 
+(credential brute-forcing, post-exploitation commands typical of malware), all 
+within a Docker network completely isolated from the internet and the local network.
 
-Isto permite demonstrar competências tanto do lado defensivo (deteção, logging, 
-visualização) como do lado ofensivo (como um atacante automatiza reconhecimento 
-e exploração), sem os riscos de expor infraestrutura real.
+This demonstrates both defensive skills (detection, logging, visualization) and 
+offensive understanding (how an attacker automates reconnaissance and exploitation), 
+without the risks of exposing real infrastructure.
 
-## Arquitetura
+## Tech stack
 
-┌─────────────────────────────────────────────┐
-│ Docker Network (internal: true) │
-│ Sem rota para internet/rede local │
-│ │
-│ ┌──────────────┐ ┌───────────────┐ │
-│ │ Attacker │ SSH │ Cowrie │ │
-│ │ (Python / │────────▶│ Honeypot │ │
-│ │ paramiko) │ │ (porta 2222) │ │
-│ └──────────────┘ └───────┬───────┘ │
-│ │ │
-└────────────────────────────────────┼───────────┘
-│ logs (volume)
-▼
-┌───────────────────┐
-│ logs/cowrie.json │
-└─────────┬──────────┘
-│ lido por
-▼
-┌───────────────────┐
-│ Node/Express │
-│ Dashboard │
-│ (localhost:3000) │
-└───────────────────┘
+- **Docker Compose** — orchestration and network isolation
+- **Cowrie** — medium-interaction SSH/Telnet honeypot
+- **Python + paramiko** — automated attack script
+- **Node.js + Express** — dashboard server
+- **HTML/CSS/JS vanilla** — visualization (no frameworks, kept simple on purpose)
 
+## How to run
 
-## Stack técnica
-
-- **Docker Compose** — orquestração e isolamento de rede
-- **Cowrie** — honeypot SSH/Telnet de médio interativo
-- **Python + paramiko** — script de ataque automatizado
-- **Node.js + Express** — servidor do dashboard
-- **HTML/CSS/JS vanilla** — visualização (sem frameworks, propositadamente simples)
-
-## Como correr
-
-Pré-requisitos: Docker Desktop instalado.
+Prerequisites: Docker Desktop installed.
 
 ```bash
-# 1. Subir o honeypot
+# 1. Start the honeypot
 docker compose up -d cowrie
 
-# 2. Construir e correr o atacante automático
+# 2. Build and run the automated attacker
 docker compose build attacker
 docker compose run --rm attacker
 
-# 3. Instalar dependências do dashboard e arrancar
+# 3. Install dashboard dependencies and start it
 cd dashboard
 npm install
 node server.js
 ```
 
-Abrir `http://localhost:3000`.
+Open `http://localhost:3000`.
 
-## O que o atacante simula
+## What the attacker simulates
 
-O script (`attacker/attack.py`) testa uma lista de credenciais comuns usadas por 
-bots reais na internet (`root/admin`, `admin/password`, `root/raspberry`, etc.) e, 
-sempre que consegue "entrar", executa uma sequência de comandos típicos de 
-reconhecimento e comprometimento (`whoami`, `cat /etc/passwd`, tentativas de 
-download de payloads via `wget`/`curl`).
+The script (`attacker/attack.py`) tests a list of common credentials used by 
+real bots on the internet (`root/admin`, `admin/password`, `root/raspberry`, etc.) 
+and, whenever it "gets in", runs a sequence of commands typical of reconnaissance 
+and compromise (`whoami`, `cat /etc/passwd`, `wget`/`curl` payload download attempts).
 
-## Resultados de um ataque de teste
+## Results from a test run
 
-*(preencher depois de correres o ataque — exemplo do meu teste:)*
+- **10 SSH sessions** logged
+- **8 of 8 tested credentials** succeeded (Cowrie is permissive by default — 
+  expected behavior for a honeypot, the goal is to capture behavior, not block it)
+- Most executed commands: `whoami`, `cat /etc/passwd`, `uname -a` (reconnaissance), 
+  followed by `wget`/`curl` attempts (payload download)
 
-- **10 sessões** SSH registadas
-- **8 de 8 credenciais testadas** tiveram sucesso (o Cowrie por defeito é permissivo — 
-  comportamento esperado de um honeypot, o objetivo é capturar comportamento, não bloquear)
-- Comandos mais executados: `whoami`, `cat /etc/passwd`, `uname -a` (reconhecimento), 
-  seguidos de tentativas de `wget`/`curl` (download de payload)
+## Technical challenges and how they were solved
 
-## Desafios técnicos e como foram resolvidos
+This was built from scratch, including the environment setup — some real problems 
+encountered along the way:
 
-Isto foi construído do zero, incluindo o setup do ambiente — alguns problemas reais 
-encontrados pelo caminho:
-
-- **Docker sem virtualização detetada**: resolvido ativando WSL2/Virtual Machine 
-  Platform via `dism.exe` e confirmando o estado com `systeminfo` antes de mexer na BIOS
-- **Isolamento de rede vs. ferramentas de debug**: a rede `internal: true` bloqueia 
-  corretamente o acesso à internet de dentro dos containers — o que também impede 
-  instalar ferramentas em runtime. Resolvido usando a imagem `netshoot`, que já vem 
-  com ferramentas de rede pré-instaladas
-- **Falha SSH intermitente**: negociação de algoritmos de chave incompatível entre 
-  cliente SSH moderno e o Cowrie — resolvido forçando algoritmos de compatibilidade 
+- **Docker not detecting virtualization**: solved by enabling WSL2/Virtual Machine 
+  Platform via `dism.exe` and confirming the state with `systeminfo` before touching the BIOS
+- **Network isolation vs. debugging tools**: the `internal: true` network correctly 
+  blocks internet access from inside the containers — which also prevents installing 
+  tools at runtime. Solved by using the `netshoot` image, which comes with network 
+  tools pre-installed
+- **Intermittent SSH failure**: incompatible key exchange algorithm negotiation 
+  between a modern SSH client and Cowrie — solved by forcing compatibility algorithms 
   (`KexAlgorithms`, `HostKeyAlgorithms`)
-- **PATH do Windows**: Node.js e Git instalados mas não reconhecidos em terminais 
-  já abertos — sempre resolvido reiniciando o terminal ou corrigindo o PATH do sistema
-- **PowerShell Execution Policy**: `npm` bloqueado pela política de segurança por 
-  defeito do Windows — resolvido com `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
+- **Windows PATH**: Node.js and Git installed but not recognized in already-open 
+  terminals — always solved by restarting the terminal or fixing the system PATH
+- **PowerShell Execution Policy**: `npm` blocked by Windows' default security 
+  policy — solved with `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
-## Possíveis melhorias (v2)
+## Possible improvements (v2)
 
-- Análise dos comandos executados usando um LLM local (Ollama) para triagem 
-  automática e classificação de intenção do atacante
-- Timeline interativa dos eventos
-- Suporte a mais protocolos honeypot (HTTP, FTP)
-- Geolocalização de IPs (aplicável se o honeypot for exposto de forma controlada 
-  numa VPS isolada no futuro)
+- Analyzing executed commands using a local LLM (Ollama) for automatic triage 
+  and attacker intent classification
+- Interactive event timeline
+- Support for more honeypot protocols (HTTP, FTP)
+- IP geolocation (applicable if the honeypot is exposed in a controlled way 
+  on an isolated VPS in the future)
 
-## Aviso
+## Disclaimer
 
-Este projeto é para fins educacionais e de portfólio. O honeypot corre inteiramente 
-isolado, sem exposição a redes externas.
+This project is for educational and portfolio purposes. The honeypot runs 
+entirely isolated, with no exposure to external networks.
