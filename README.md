@@ -56,7 +56,7 @@ download de payloads via `wget`/`curl`).
 
 ## Resultados de um ataque de teste
 
-*(preencher depois de correres o ataque — exemplo do meu teste:)*
+
 
 - **10 sessões** SSH registadas
 - **8 de 8 credenciais testadas** tiveram sucesso (o Cowrie por defeito é permissivo — 
@@ -66,7 +66,7 @@ download de payloads via `wget`/`curl`).
 
 ## Desafios técnicos e como foram resolvidos
 
-Isto foi construído do zero, incluindo o setup do ambiente — alguns problemas reais 
+Isto foi construído do zero, incluindo o setup do ambiente, alguns problemas reais 
 encontrados pelo caminho:
 
 - **Docker sem virtualização detetada**: resolvido ativando WSL2/Virtual Machine 
